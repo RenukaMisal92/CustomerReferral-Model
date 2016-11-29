@@ -1,9 +1,18 @@
+// External dependencies
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+// Internal dependencies
+var customerController = require('../controllers/customerController');
+var customerValidator = require('../middlewares/customerValidator');
 
-module.exports = router;
+router.post('/', customerController.addCustomer);
+router.get('/:id', customerController.getCustomerDetails);
+
+router.get('/referral/count', customerValidator, customerController.getCountOfReferrals);
+router.get('/referrals', customerValidator, customerController.getAllReferrals);
+router.post('/referral', customerController.addReferral);
+
+
+// Exports router.
+module.exports.customerRouter = router;
