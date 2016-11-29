@@ -26,7 +26,7 @@ var countersSchema = new Schema({
 var counter = mongoose.model('counter', countersSchema, 'counter');
 
 var generateCounter = function() {
-    var countersDocument = new Counter();
+    var countersDocument = new counter();
     countersDocument.save(function (error, result) {
         if (error) {
             logger.error('[countersDocument] ' + error);
@@ -38,14 +38,18 @@ var generateCounter = function() {
 
 
 // initialization of Counter
-counter.generateCounter();
+generateCounter();
 
 var customerSchema = new Schema({
     customer_id : { type: String, index: { unique: true}},
     email:  { type: String, required: true },
     referral_id :{type: String},
-    payback : {type: Number},
-    isAmbassador :{type: Boolean},
+    payback : {type: Number,  default: 0},
+    isAmbassador :{type: Boolean,  default: false},
+    isFirstLevelChild : {type :Boolean},
+    ambassador_id : {type: String},
+    parentAmbassadors : {type : []},
+    childLevelOfAmbassadors :{type : String},
     joiningDate : {type : Date, default: Date.now, required: true},
     lastUpdated : {type: Date, default: Date.now, required: true}
 });

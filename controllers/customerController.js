@@ -4,6 +4,7 @@
 
 // External dependencies
 var async = require('async');
+var _ = require('lodash');
 
 // Internal dependencies
 var model = require('../model/db');
@@ -45,9 +46,22 @@ var addCustomer = function(req, res, next) {
             });
         },
         /**
-         * Step 2 : save new customer details in db
+         * step 2 : generate a customer id with counters collection
+         * */
+        function(body, cb){
+            customerService.generateCustomerId(body, function(error, result){
+                if(error){
+                    return cb (error, null);
+                }
+                body.customer_id = result.customer_id;
+                return cb(null, body);
+            });
+        },
+        /**
+         * Step 3 : save new customer details in db
          */
         function saveInDB(body, cb){
+
             logger.debug("Body" + JSON.stringify(body));
 
             var customerObject = customerService.buildObject(body);
@@ -55,14 +69,15 @@ var addCustomer = function(req, res, next) {
                 if (error) {
                     logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
                     buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
-                    return res.send('500', Constants.INTERNAL_SERVER_ERROR);
+                    return res.status(500).send(buildResponse);
                 }
                 if (!result) {
                     logger.warn(CONTROLLER_NAME + "No result found - " + JSON.stringify(result));
                     buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
-                    return res.send('404', Constants.NOT_FOUND);
+                    return res.status(500).send(buildResponse);
                 }
-                return res.send('200', Constants.CREATED_SUCCESSFULLY);
+                buildResponse = utils.getResponse(200, Constants.CUSTOMER_ADDED_SUCCESSFULLY + " and customer_id is " + result.customer_id);
+                return res.status(200).send(buildResponse);
             });
         }]
     );
@@ -90,20 +105,64 @@ var getCustomerDetails = function(req, res, next){
         }
         if(!result){
             logger.warn(CONTROLLER_NAME + "No result found - " + JSON.stringify(result));
-            buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
-            return res.send('404',Constants.NOT_FOUND);
+            buildResponse = utils.getResponse(500, Constants.CUSTOMER_NOT_FOUND);
+            return res.send('404', buildResponse);
         }
         logger.debug("Result found " + JSON.stringify(result));
         return res.status(200).send(result);
     });
 };
 
+/**
+ * @method getCountOfReferrals
+ * @param req
+ * @param res
+ * @param next
+ */
 var getCountOfReferrals = function(req, res, next){
+
+    if(!req.params.id){
+        return res.send('400',Constants.MISSING_CUSTOMER_ID);
+    }
+    var buildResponse;
+    var customerId = req.params.id;
+
+    customerService.getCountOfReferralWithCustomerId(customerId, function(error, result){
+        if (error) {
+            buildResponse = utils.getResponse('503', Constants.INTERNAL_SERVER_ERROR);
+            return res.status(503).send(buildResponse);
+        }
+        if (_.isEmpty(result)) {
+            buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
+            return res.status(404).send(buildResponse);
+        }
+        buildResponse = utils.getResponse('200', "Customer_id " + customerId + " has " + result + " referrals count.");
+        return res.status(200).send(buildResponse);
+    });
+
 
 };
 
 var getAllReferrals = function (req, res, next){
 
+    if(!req.params.id){
+        return res.send('400',Constants.MISSING_CUSTOMER_ID);
+    }
+    var buildResponse;
+    var customerId = req.params.id;
+
+    customerService.findReferralWithCustomerId(customerId, function(error, result){
+        if (error) {
+            buildResponse = utils.getResponse('503', Constants.INTERNAL_SERVER_ERROR);
+            return res.status(503).send(buildResponse);
+        }
+        if (_.isEmpty(result)) {
+            buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
+            return res.status(404).send(buildResponse);
+        }
+        buildResponse = utils.getResponse('200', result);
+        return res.status(200).send(buildResponse);
+    });
 };
 
 var addReferral = function(req, res, next){
@@ -115,35 +174,215 @@ var addReferral = function(req, res, next){
     var METHOD_NAME = '[addReferral] - ';
 
     logger.debug(CONTROLLER_NAME + METHOD_NAME + "referral_id" + referral_id);
-    customerService.findCustomerById(referral_id, function(error, result){
-        if(error){
-            buildResponse = utils.getResponse('503', Constants.INTERNAL_SERVER_ERROR);
-            return res.status(503).send(buildResponse);
+
+    async.waterfall([
+
+        /**
+         * Step 1 : Check if the email id specified by referrals already existed in records.
+         */
+            function(cb){
+            customerService.findCustomerByEmail(email, function (error, result) {
+                if (error) {
+                    logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
+                    buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
+                    return res.status(500).send(buildResponse);
+                }
+                if (result) {
+                    logger.warn(CONTROLLER_NAME + "Customer already exists - " + JSON.stringify(result));
+                    buildResponse = utils.getResponse(200, Constants.CUSTOMER_ALREADY_EXISTS);
+                    return res.status(200).send(buildResponse);
+                }
+                var isValidEmail = true;
+                cb(null,isValidEmail);
+            });
+        },
+        /**
+         * step 2 :
+         */
+        function(isValidEmail, cb){
+            customerService.findCustomerById(referral_id, function(error, result) {
+                if(error){
+                    logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
+                    buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
+                    return res.status(500).send(buildResponse);;
+                }
+                if (_.isEmpty(result)) {
+                    buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
+                    return res.status(404).send(buildResponse);
+                }
+                logger.debug("Result found " + JSON.stringify(result));
+                var customerDetails = {};
+                customerDetails.isReferralAmbassador = result.isAmbassador;
+                customerDetails.isFirstLevelChild = result.isFirstLevelChild;
+                customerDetails.payback = result.payback;
+                customerDetails.ambassador_id = result.ambassador_id;
+                customerDetails.parentAmbassadors = result.parentAmbassadors;
+                cb(null, customerDetails);
+            });
+        },
+        /**
+         * Step 2 : Generate a customer id for new referral
+         */
+        function (customerDetails, cb){
+            //body.payback = currentPayback;
+            customerService.generateCustomerId(body, function(error, result){
+                if(error){
+                    buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+                    return res.status('500').send(buildResponse);
+                }
+                customerDetails.customerId  = result.customer_id;
+                return cb(null, customerDetails);
+            });
+        },
+        /**
+         * Step 3 : Save a new customer in records
+         */
+        function(customerDetails, cb){
+
+            body.customer_id = customerDetails.customerId;
+
+            logger.debug(CONTROLLER_NAME + METHOD_NAME + "customerDetails.parentAmbassadors - " + JSON.stringify(customerDetails.parentAmbassadors, null, 2));
+
+            var customerObject = customerService.buildObject(body);
+
+            if(customerDetails.isReferralAmbassador && !customerDetails.isFirstLevelChild){
+                customerObject.ambassador_id = body.referral_id;
+                customerObject.parentAmbassadors = customerDetails.parentAmbassadors;
+                customerObject.parentAmbassadors.push(body.referral_id);
+                customerObject.childLevelOfAmbassadors = customerObject.parentAmbassadors.length;
+            }
+            else if(customerDetails.isReferralAmbassador){
+                customerObject.parentAmbassadors = customerDetails.parentAmbassadors;
+                customerObject.parentAmbassadors.push(body.referral_id);
+                customerObject.childLevelOfAmbassadors = customerObject.parentAmbassadors.length;
+            }
+
+            customerService.saveCustomer(customerObject, function(error, newReferralObject){
+                logger.debug(CONTROLLER_NAME + METHOD_NAME + "Object saved successfully" + JSON.stringify(newReferralObject));
+                if(error){
+                    buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+                    return res.status('500').send(buildResponse);
+                }
+                var response = {
+                    newReferralObject : newReferralObject,
+                    customerDetails : customerDetails
+                };
+                return cb(null, response);
+            });
+        },
+        /**
+         * Step 4 : Calculate the payback point and update the customer's record who referred the newly added customer.
+         */
+        function(response, cb){
+            if(response) {
+                var currentPaybackPoint = response.customerDetails.payback;
+                var customerDetails = response.customerDetails;
+                var paybackPointsForReferral = customerService.calculatePaybackPoints(currentPaybackPoint, false);
+                customerService.updatePaybackPointsOfReferral(referral_id, paybackPointsForReferral, function (error, result) {
+                    if (error) {
+                        buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+                        return res.status('500').send(buildResponse);
+                    }
+
+                    if(customerDetails.childLevelOfAmbassadors === 1){
+                        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Updating Ambassador payback points" + JSON.stringify(customerDetails, null,2));
+                        customerService.updatePaybackPointsOfAmbassador(customerDetails.ambassador_id, function(error, response){
+                        });
+                    }
+                    buildResponse = utils.getResponse('200', Constants.REFERRAL_ADDED_SUCCESSFULLY);
+                    return res.status('200').send(buildResponse);
+                });
+            }
+
+
+
         }
-        if(!result){
-            buildResponse = utils.getResponse('404', "Referral Id not matched");
-            return res.status(404).send(buildResponse);
-        }
-        var customerObject = customerService.buildObject(body);
-        customerService.saveCustomer(customerObject, function(error, result){
-            logger.debug(CONTROLLER_NAME + METHOD_NAME + "Object saved successfully" + JSON.stringify(result));
-        });
-
-        var currentPaybackPoint = result.payback;
-        var paybackPoints = customerService.calculatePaybackPoints(currentPaybackPoint, isAmbassador);
-        logger.debug(CONTROLLER_NAME + METHOD_NAME + "paybackPoints - " + paybackPoints);
-        logger.debug(CONTROLLER_NAME + METHOD_NAME + "customer_id - " + referral_id);
-
-        customerService.updateCustomersDetails(referral_id, paybackPoints, function(error, result) {
-
-        });
-    });
-
+    ]);
 };
 
+/**
+ * @method updateCustomerForAmbassador
+ * @param req
+ * @param res
+ * @param next
+ */
+var updateCustomerForAmbassador = function(req, res, next){
+
+    var METHOD_NAME = '[updateCustomerForAmbassador] - ';
+    var customer_id = req.params.id;
+    var buildResponse;
+    logger.debug(CONTROLLER_NAME + METHOD_NAME + "currentAmbassadorStatus" + req.body.currentAmbassadorStatus);
+    logger.debug(CONTROLLER_NAME + METHOD_NAME + "customer_id" + customer_id);
+
+    if(req.body.currentAmbassadorStatus){
+        buildResponse = utils.getResponse('400', Constants.ALREADY_AMBASSADOR);
+        return res.status('400').send(buildResponse);
+    }
+    customerService.updateAmbassadorDetails(customer_id, function(error, result) {
+        if(error){
+            logger.error(CONTROLLER_NAME + METHOD_NAME + "Error : " + JSON.stringify(error));
+            buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+            return res.status('500').send(buildResponse);
+        }
+        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Updated results" + JSON.stringify(result));
+        buildResponse = utils.getResponse('200', Constants.CUSTOMER_UPDATED_SUCCESSFULLY);
+        return res.status('200').send(buildResponse);
+    });
+};
+
+/**
+ * @method getAmbassadorChild
+ * @param req
+ * @param res
+ * @param next
+ */
+var getAmbassadorChild = function(req, res, next){
+    var level = req.query.level;
+    var customer_id = req.params.id;
+    var buildResponse;
+    var METHOD_NAME = '[getAmbassadorChild]';
+
+    var currentAmbassadorStatus = req.body.currentAmbassadorStatus;
+    if(!currentAmbassadorStatus){
+        logger.debug(CONTROLLER_NAME + METHOD_NAME + "currentAmbassadorStatus" + JSON.stringify(currentAmbassadorStatus));
+        buildResponse = utils.getResponse('200', Constants.NOT_AMBASSADOR);
+        return res.status('200').send(buildResponse);
+    }
+    customerService.fetchAmbassadorChildren(customer_id, level, function(error, result) {
+        if(error){
+            logger.error(CONTROLLER_NAME + METHOD_NAME + "Error : " + JSON.stringify(error));
+            buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+            return res.status('500').send(buildResponse);
+        }
+        if (_.isEmpty(result)) {
+            buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
+            return res.status(404).send(buildResponse);
+        }
+        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Results" + JSON.stringify(result));
+        buildResponse = utils.getResponse('200', result);
+        return res.status('200').send(buildResponse);
+    });
+};
+
+var getAllChildOfAmbassador = function(){
+    var METHOD_NAME = '[getAmbassadorChild]';
+    var customer_id = req.params.id;
+    var buildResponse;
+    customerService.fetchAllAmbassadorsChild(customer_id, function(error, result) {
+        if(error){
+            logger.error(CONTROLLER_NAME + METHOD_NAME + "Error : " + JSON.stringify(error));
+            buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
+            return res.status('500').send(buildResponse);
+        }
+        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Results" + JSON.stringify(result));
+        buildResponse = utils.getResponse('200', result);
+        return res.status('200').send(buildResponse);
+    });
+}
 module.exports.addCustomer = addCustomer;
 module.exports.getCustomerDetails = getCustomerDetails;
 module.exports.getCountOfReferrals = getCountOfReferrals;
 module.exports.getAllReferrals = getAllReferrals;
 module.exports.addReferral = addReferral;
-
+module.exports.updateCustomerForAmbassador = updateCustomerForAmbassador;
+module.exports.getAmbassadorChild = getAmbassadorChild;
