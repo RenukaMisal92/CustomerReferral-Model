@@ -12,7 +12,7 @@ CustomerReferral-Model is designed for increasing the market presence of company
 # Steps to start a server
 
     // Clone repository
-    $ git clone {clon_url}
+    $ git clone {clone_url}
     
     // Go to the git folder of repository
     $ cd CustomerReferral-Model/ 
