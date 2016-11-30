@@ -84,8 +84,8 @@ var addCustomer = function(req, res, next) {
                 buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
                 return res.status(500).send(buildResponse);
             }
-            buildResponse = utils.getResponse(200, Constants.CUSTOMER_ADDED_SUCCESSFULLY + " and customer_id is " + result.customer_id);
-            return res.status(200).send(buildResponse);
+            buildResponse = utils.getResponse(201, Constants.CUSTOMER_ADDED_SUCCESSFULLY + " and customer_id is " + result.customer_id);
+            return res.status(201).send(buildResponse);
         });
     });
 };
@@ -113,7 +113,7 @@ var getCustomerDetails = function(req, res, next){
         }
         if(!result){
             logger.warn(CONTROLLER_NAME + "No result found - " + JSON.stringify(result));
-            buildResponse = utils.getResponse(500, Constants.CUSTOMER_NOT_FOUND);
+            buildResponse = utils.getResponse(404, Constants.CUSTOMER_NOT_FOUND);
             return res.send('404', buildResponse);
         }
         logger.debug("Result found " + JSON.stringify(result));
@@ -131,7 +131,8 @@ var getCustomerDetails = function(req, res, next){
 var getCountOfReferrals = function(req, res, next){
 
     if(!req.params.id){
-        return res.send('400',Constants.MISSING_CUSTOMER_ID);
+        buildResponse = utils.getResponse('400', Constants.MISSING_CUSTOMER_ID);
+        return res.status(400).send(buildResponse);
     }
     var buildResponse;
     var customerId = req.params.id;
@@ -162,7 +163,8 @@ var getCountOfReferrals = function(req, res, next){
 var getAllReferrals = function (req, res, next){
 
     if(!req.params.id){
-        return res.send('400',Constants.MISSING_CUSTOMER_ID);
+        buildResponse = utils.getResponse('400', Constants.MISSING_CUSTOMER_ID);
+        return res.status(400).send(buildResponse);
     }
     var buildResponse;
     var customerId = req.params.id;
@@ -311,8 +313,8 @@ var addReferral = function(req, res, next){
                         customerService.updatePaybackPointsOfAmbassador(customerDetails.ambassador_id, function(error, response){
                         });
                     }
-                    buildResponse = utils.getResponse('200', Constants.REFERRAL_ADDED_SUCCESSFULLY);
-                    return res.status('200').send(buildResponse);
+                    buildResponse = utils.getResponse('201', Constants.REFERRAL_ADDED_SUCCESSFULLY);
+                    return res.status('201').send(buildResponse);
                 });
             }
         }
@@ -345,8 +347,8 @@ var updateCustomerForAmbassador = function(req, res, next){
             return res.status('500').send(buildResponse);
         }
         logger.debug(CONTROLLER_NAME + METHOD_NAME + "Updated results" + JSON.stringify(result));
-        buildResponse = utils.getResponse('200', Constants.CUSTOMER_UPDATED_SUCCESSFULLY);
-        return res.status('200').send(buildResponse);
+        buildResponse = utils.getResponse('201', Constants.CUSTOMER_UPDATED_SUCCESSFULLY);
+        return res.status('201').send(buildResponse);
     });
 };
 
