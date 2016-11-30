@@ -1,0 +1,173 @@
+{
+	"variables": [],
+	"info": {
+		"name": "CustomerReferral-Model",
+		"_postman_id": "b0002bbb-7a95-071e-6ff2-7bc2cfda010a",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Add Customer",
+			"request": {
+				"url": "localhost:3000/customer",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"email\": \"renuka.misal@gmail.com\",\n   \"referral_id\" : \"\"\n}"
+				},
+				"description": "It aded the new customer in records with isAmbassador false"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Customer Details",
+			"request": {
+				"url": "localhost:3000/customer/16",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"email\": \"renuka.misal8@gmail.com\",\n    \"referral_id\" : \"\",\n   \"isAmbassador\" : false\n}"
+				},
+				"description": "Get the customer details with payback points joining data and the last uodated date of records"
+			},
+			"response": []
+		},
+		{
+			"name": "Add a referral ",
+			"request": {
+				"url": "localhost:3000/customer/referral",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"email\": \"renuk.misal@gmail.com\",\n    \"referral_id\" : 2,\n   \"isAmbassador\" : false\n}"
+				},
+				"description": "Adding a referrals with referral_id as customer_id of the existing customer in records."
+			},
+			"response": []
+		},
+		{
+			"name": "Get the count of referrals",
+			"request": {
+				"url": "localhost:3000/customer/16/referral/count",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"email\": \"renuka.misal509@gmail.com\",\n    \"referral_id\" : 9,\n   \"isAmbassador\" : true\n}"
+				},
+				"description": " Retrieves the count of referrals, referred by the customer_id"
+			},
+			"response": []
+		},
+		{
+			"name": "Get the list of referrals",
+			"request": {
+				"url": "localhost:3000/customer/3/referral",
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"description": "Retrievies the referrals list referred by the customer_id"
+			},
+			"response": []
+		},
+		{
+			"name": "FetchAllAmbassadorChildren",
+			"request": {
+				"url": "localhost:3000/ambassador/2/all",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "fetchChildrenAtNthLEvel",
+			"request": {
+				"url": "localhost:3000/ambassador/2?level=2",
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "AddAmbassador",
+			"request": {
+				"url": "localhost:3000/ambassador",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"email\": \"renuka.misal34@gmail.com\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "CovertCustomerToAmbassador",
+			"request": {
+				"url": "localhost:3000/customer/1",
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

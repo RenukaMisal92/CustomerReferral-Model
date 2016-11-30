@@ -15,17 +15,16 @@ var utils = require('../utils/utils');
 var CONTROLLER_NAME = '[customerController] - ';
 
 /**
- * @method addCustomer
+ * @method processToAddCustomer
+ * @description Function to process the req to add a new customer in record.
  * @param req
  * @param res
- * @param next
+ * @param callback
  */
-var addCustomer = function(req, res, next) {
-
-    logger.debug("Request Object ", (req.body));
+var processToAddCustomer = function(req, res, callback){
     var body = req.body;
     var email = body.email;
-    var buildResponse;
+    var METHOD_NAME ='[processToAddCustomer] - ';
     async.waterfall([
         /**
          * Step 1 : FindInDb if customer already exists with email id
@@ -33,12 +32,12 @@ var addCustomer = function(req, res, next) {
         function findInDB(cb) {
             customerService.findCustomerByEmail(email, function (error, result) {
                 if (error) {
-                    logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
+                    logger.error(CONTROLLER_NAME + METHOD_NAME + "Error - " + JSON.stringify(error));
                     buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
                     return res.status(500).send(buildResponse);
                 }
                 if (result) {
-                    logger.warn(CONTROLLER_NAME + "Customer already exists - " + JSON.stringify(result));
+                    logger.warn(CONTROLLER_NAME + METHOD_NAME+  "Customer already exists - " + JSON.stringify(result));
                     buildResponse = utils.getResponse(200, Constants.CUSTOMER_ALREADY_EXISTS);
                     return res.status(200).send(buildResponse);
                 }
@@ -54,37 +53,46 @@ var addCustomer = function(req, res, next) {
                     return cb (error, null);
                 }
                 body.customer_id = result.customer_id;
-                return cb(null, body);
-            });
-        },
-        /**
-         * Step 3 : save new customer details in db
-         */
-        function saveInDB(body, cb){
-
-            logger.debug("Body" + JSON.stringify(body));
-
-            var customerObject = customerService.buildObject(body);
-            customerService.saveCustomer(customerObject, function (error, result) {
-                if (error) {
-                    logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
-                    buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
-                    return res.status(500).send(buildResponse);
-                }
-                if (!result) {
-                    logger.warn(CONTROLLER_NAME + "No result found - " + JSON.stringify(result));
-                    buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
-                    return res.status(500).send(buildResponse);
-                }
-                buildResponse = utils.getResponse(200, Constants.CUSTOMER_ADDED_SUCCESSFULLY + " and customer_id is " + result.customer_id);
-                return res.status(200).send(buildResponse);
+                return callback(null, body);
             });
         }]
     );
 };
 
 /**
+ * @method addCustomer
+ * @description Adding a new customer to records
+ * @param req
+ * @param res
+ * @param next
+ */
+var addCustomer = function(req, res, next) {
+
+    logger.debug("Request Object ", (req.body));
+    var buildResponse;
+    processToAddCustomer(req, res, function(err, result){
+        logger.debug("Body" + JSON.stringify(result));
+        var customerObject = customerService.buildObject(result);
+        customerService.saveCustomer(customerObject, function (error, result) {
+            if (error) {
+                logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
+                buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
+                return res.status(500).send(buildResponse);
+            }
+            if (!result) {
+                logger.warn(CONTROLLER_NAME + "No result found - " + JSON.stringify(result));
+                buildResponse = utils.getResponse(500, Constants.INTERNAL_SERVER_ERROR);
+                return res.status(500).send(buildResponse);
+            }
+            buildResponse = utils.getResponse(200, Constants.CUSTOMER_ADDED_SUCCESSFULLY + " and customer_id is " + result.customer_id);
+            return res.status(200).send(buildResponse);
+        });
+    });
+};
+
+/**
  * @method getCustomerDetails
+ * @description Finding the customer details by passing customer_id
  * @param req
  * @param res
  * @param next
@@ -115,6 +123,7 @@ var getCustomerDetails = function(req, res, next){
 
 /**
  * @method getCountOfReferrals
+ * @description Getting the count of referrals under a customer
  * @param req
  * @param res
  * @param next
@@ -143,6 +152,13 @@ var getCountOfReferrals = function(req, res, next){
 
 };
 
+/**
+ * @method getAllReferrals
+ * @description Getting all the referrals under a customer_id
+ * @param req
+ * @param res
+ * @param next
+ */
 var getAllReferrals = function (req, res, next){
 
     if(!req.params.id){
@@ -165,6 +181,13 @@ var getAllReferrals = function (req, res, next){
     });
 };
 
+/**
+ * @methodaddReferral
+ * @description Adding a referral to the records with existing customer's id as referral_id for new customer
+ * @param req
+ * @param res
+ * @param next
+ */
 var addReferral = function(req, res, next){
     var buildResponse;
     var body = req.body;
@@ -176,11 +199,10 @@ var addReferral = function(req, res, next){
     logger.debug(CONTROLLER_NAME + METHOD_NAME + "referral_id" + referral_id);
 
     async.waterfall([
-
         /**
          * Step 1 : Check if the email id specified by referrals already existed in records.
          */
-            function(cb){
+        function(cb){
             customerService.findCustomerByEmail(email, function (error, result) {
                 if (error) {
                     logger.error(CONTROLLER_NAME + "Error - " + JSON.stringify(error));
@@ -293,15 +315,13 @@ var addReferral = function(req, res, next){
                     return res.status('200').send(buildResponse);
                 });
             }
-
-
-
         }
     ]);
 };
 
 /**
  * @method updateCustomerForAmbassador
+ * @description Converting a existing customer as Ambassador
  * @param req
  * @param res
  * @param next
@@ -330,59 +350,14 @@ var updateCustomerForAmbassador = function(req, res, next){
     });
 };
 
-/**
- * @method getAmbassadorChild
- * @param req
- * @param res
- * @param next
- */
-var getAmbassadorChild = function(req, res, next){
-    var level = req.query.level;
-    var customer_id = req.params.id;
-    var buildResponse;
-    var METHOD_NAME = '[getAmbassadorChild]';
 
-    var currentAmbassadorStatus = req.body.currentAmbassadorStatus;
-    if(!currentAmbassadorStatus){
-        logger.debug(CONTROLLER_NAME + METHOD_NAME + "currentAmbassadorStatus" + JSON.stringify(currentAmbassadorStatus));
-        buildResponse = utils.getResponse('200', Constants.NOT_AMBASSADOR);
-        return res.status('200').send(buildResponse);
-    }
-    customerService.fetchAmbassadorChildren(customer_id, level, function(error, result) {
-        if(error){
-            logger.error(CONTROLLER_NAME + METHOD_NAME + "Error : " + JSON.stringify(error));
-            buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
-            return res.status('500').send(buildResponse);
-        }
-        if (_.isEmpty(result)) {
-            buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
-            return res.status(404).send(buildResponse);
-        }
-        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Results" + JSON.stringify(result));
-        buildResponse = utils.getResponse('200', result);
-        return res.status('200').send(buildResponse);
-    });
-};
 
-var getAllChildOfAmbassador = function(){
-    var METHOD_NAME = '[getAmbassadorChild]';
-    var customer_id = req.params.id;
-    var buildResponse;
-    customerService.fetchAllAmbassadorsChild(customer_id, function(error, result) {
-        if(error){
-            logger.error(CONTROLLER_NAME + METHOD_NAME + "Error : " + JSON.stringify(error));
-            buildResponse = utils.getResponse('500', Constants.INTERNAL_SERVER_ERROR);
-            return res.status('500').send(buildResponse);
-        }
-        logger.debug(CONTROLLER_NAME + METHOD_NAME + "Results" + JSON.stringify(result));
-        buildResponse = utils.getResponse('200', result);
-        return res.status('200').send(buildResponse);
-    });
-}
+
+
 module.exports.addCustomer = addCustomer;
 module.exports.getCustomerDetails = getCustomerDetails;
 module.exports.getCountOfReferrals = getCountOfReferrals;
 module.exports.getAllReferrals = getAllReferrals;
 module.exports.addReferral = addReferral;
 module.exports.updateCustomerForAmbassador = updateCustomerForAmbassador;
-module.exports.getAmbassadorChild = getAmbassadorChild;
+module.exports.processToAddCustomer = processToAddCustomer;

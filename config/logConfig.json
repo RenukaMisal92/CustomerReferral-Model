@@ -2,7 +2,7 @@
   "appenders": [{"type":"console"},
     {
       "type": "dateFile",
-      "filename": "applogs",
+      "filename": "logs/applogs",
       "pattern": "-yyyy-MM-dd.log",
       "alwaysIncludePattern": true,
       "layout": {

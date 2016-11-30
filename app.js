@@ -7,8 +7,11 @@ var bodyParser = require('body-parser');
 // Internal dependencies
 var model = require('./model/db');
 var customerRouter = require('./routes/customerRouter').customerRouter;
+var ambassadorRouter = require('./routes/ambassadorRouter').ambassadorRouter;
 
 // global object for loggers
+var log4jsConfig = require('./config/logConfig');
+log4js.configure(log4jsConfig);
 global.logger = log4js.getLogger('console');
 
 // Connection to mongoDB
@@ -19,6 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/customer', customerRouter);
+app.use('/ambassador', ambassadorRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

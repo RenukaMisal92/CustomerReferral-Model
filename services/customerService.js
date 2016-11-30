@@ -6,16 +6,16 @@ var model = require('../model/db');
 var Customer = require('../model/db').customer;
 var Constants = require('../utils/constant');
 var SERVICE_NAME = '[customerService] - ';
-var count = 1;
 
 /**
  * @method findReferralWithCustomerId
+ * @description Finding all the referrals under the customer id
  * @param customerId
  * @param callback
  */
 function findReferralWithCustomerId(customerId, callback){
-
-    model.customer.find({referral_id : customerId}, function(error, result) {
+    var getDetailsFor = {_id :0, customer_id : 1, email : 1, referral_id: 1,isAmbassador:1, joiningDate: 1, lastUpdated:1};
+    model.customer.find({referral_id : customerId}, getDetailsFor, function(error, result) {
         if(error){
             return callback(error, null);
         }
@@ -25,6 +25,7 @@ function findReferralWithCustomerId(customerId, callback){
 
 /**
  * @method getCountOfReferralWithCustomerId
+ * @description Gets the count of the referrals under the customer id
  * @param customerId
  * @param callback
  */
@@ -42,6 +43,7 @@ function getCountOfReferralWithCustomerId(customerId, callback){
 
 /**
  * @method generateCustomerId
+ * @description Generate a unique customer_id for keeping a track of the newly added customer
  * @param req
  * @param callback
  */
@@ -59,6 +61,7 @@ function generateCustomerId(req, callback) {
 }
 /**
  * @method buildObject
+ * @description Build a customer object from the details cumming from request
  * @param req
  * @param callback
  * @return {{}}
@@ -80,6 +83,7 @@ var buildObject = function(req, callback){
 
 /**
  * @method saveCustomer
+ * @description Saving a new customer in db
  * @param customerObject
  * @param callback
  */
@@ -94,6 +98,7 @@ var saveCustomer = function(customerObject, callback ){
 
 /**
  * @method findCustomerById
+ * @description Finding the customers with the unique customerId
  * @param customerId
  * @param callback
  */
@@ -109,6 +114,7 @@ var findCustomerById = function(customerId, callback){
 
 /**
  * @method findCustomerByEmail
+ * @description Finding the customers with the email id registered
  * @param customer_email
  * @param callback
  */
@@ -120,6 +126,7 @@ var findCustomerByEmail = function(customer_email, callback){
 
 /**
  * @method updatePaybackPointsOfReferral
+ * @description Updating the payback points of the referrals
  * @param customer_id
  * @param paybackPoint
  * @param callback
@@ -138,6 +145,7 @@ var updatePaybackPointsOfReferral = function(customer_id, paybackPoint, callback
 
 /**
  * @method updatePaybackPointsOfAmbassador
+ * @description Updating the payback points of the ambassador
  * @param ambassador_id
  * @param callback
  */
@@ -166,6 +174,7 @@ var updatePaybackPointsOfAmbassador = function(ambassador_id, callback){
 
 /**]
  * @method updateAmbassadorDetails
+ * @description Updating the details of ambassador with payback points
  * @param customer_id
  * @param callback
  */
@@ -184,6 +193,7 @@ var updateAmbassadorDetails = function(customer_id, callback){
 
 /**
  * @method calculatePaybackPoints
+ * @description Calculating the payback points on the basis of type of customer
  * @param currentPaybackPoints
  * @param isAmbassador
  * @return {*}
@@ -198,28 +208,7 @@ var calculatePaybackPoints = function(currentPaybackPoints, isAmbassador){
     return currentPaybackPoints + percentage;
 };
 
-/**
- * @method fetchAmbassadorChildren
- * @param customer_id
- * @param level
- * @param callback
- */
-var fetchAmbassadorChildren = function(customer_id, level, callback){
-    model.customer.find({$and:[{childLevelOfAmbassadors: level}, {parentAmbassadors: {$in:[customer_id]}}]}, function(error, response){
-        return callback(error, response);
-    });
-};
 
-/**
- * @method fetchAllAmbassadorsChild
- * @param customer_id
- * @param callback
- */
-var fetchAllAmbassadorsChild = function(customer_id, callback){
-    model.customer.find({parentAmbassadors: {$in:[customer_id]}}, function(error, response){
-        return callback(error, response);
-    });
-};
 
 module.exports.saveCustomer = saveCustomer;
 module.exports.buildObject = buildObject;
@@ -232,5 +221,3 @@ module.exports.findReferralWithCustomerId = findReferralWithCustomerId;
 module.exports.getCountOfReferralWithCustomerId = getCountOfReferralWithCustomerId;
 module.exports.updateAmbassadorDetails = updateAmbassadorDetails;
 module.exports.updatePaybackPointsOfAmbassador = updatePaybackPointsOfAmbassador;
-module.exports.fetchAllAmbassadorsChild = fetchAllAmbassadorsChild;
-module.exports.fetchAmbassadorChildren = fetchAmbassadorChildren;
