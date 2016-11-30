@@ -21,24 +21,24 @@
     Get children of ambassador at nth level
 
 # Add Customer
-	Summary : Adds a new customer in companies records.
-      URI : /custome
-      Method : HTTP POST
-      Request Content-Type application/json
-      Request
-      {
-         "email": "renuka.misal@gmail.com"
-      }
-      Response Content-Type : application/json
-      
-      Response
-      200 Success
-      {
-        "statusCode": 200,
-        "message": "Customer added successfully and customer_id is 17"
-      }
+    Summary : Adds a new customer in companies records.
+    URI : /custome
+    Method : HTTP POST
+    Request Content-Type application/json
+    Request
+    {
+     "email": "renuka.misal@gmail.com"
+    }
+    Response Content-Type : application/json
     
-      500   Internal Server Error
+    Response
+    200 Success
+    {
+    "statusCode": 200,
+    "message": "Customer added successfully and customer_id is 17"
+    }
+    
+    500   Internal Server Error
   
 # Get Customer By Id
 
@@ -92,7 +92,7 @@
     Response Content-Type : application/json
     
     Response
-    200 Success
+    # 200 Success
     {
       "statusCode": "200",
       "message": "Referral added successfully."
@@ -102,12 +102,12 @@
       "message": "Sorry customer is already registered with this email."
     }
     
-    404 Not found : {
+    # 404 Not found : {
     "statusCode": "404",
       "message": "Sorry, No referrals found under this referral id."
     }
     
-    500   Internal Server Error
+    # 500   Internal Server Error
 
 
 # Get all Referral
@@ -121,7 +121,7 @@
     Response Content-Type : application/json
     
     Response :
-    200 Success
+    # 200 Success
     {
       "statusCode": "200",
       "message": "Referral added successfully."
@@ -131,12 +131,12 @@
       "message": "Sorry customer is already registered with this email."
     }
     
-    404 Not found : {
+    # 404 Not found : {
     "statusCode": "404",
       "message": "Sorry, No referrals found under this referral id."
     }
     
-     500   Internal Server Error
+    # 500   Internal Server Error
 
 
 # Get count of Referrals
