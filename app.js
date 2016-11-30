@@ -3,16 +3,25 @@ var express = require('express');
 var log4js = require('log4js');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-// Internal dependencies
-var model = require('./model/db');
-var customerRouter = require('./routes/customerRouter').customerRouter;
-var ambassadorRouter = require('./routes/ambassadorRouter').ambassadorRouter;
+var fs = require('fs');
 
 // global object for loggers
 var log4jsConfig = require('./config/logConfig');
 log4js.configure(log4jsConfig);
 global.logger = log4js.getLogger('console');
+
+try {
+  fs.mkdirSync("logs","0777");
+} catch (err) {
+  logger.info("Creating logs folder " + err);
+
+}
+// Internal dependencies
+var model = require('./model/db');
+var customerRouter = require('./routes/customerRouter').customerRouter;
+var ambassadorRouter = require('./routes/ambassadorRouter').ambassadorRouter;
+
+
 
 // Connection to mongoDB
 model.connectToMongo();
