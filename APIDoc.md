@@ -92,7 +92,7 @@
     Response Content-Type : application/json
     
     Response
-    # 200 Success
+    200 Success
     {
       "statusCode": "200",
       "message": "Referral added successfully."
@@ -102,48 +102,55 @@
       "message": "Sorry customer is already registered with this email."
     }
     
-    # 404 Not found : {
+    404 Not found : {
     "statusCode": "404",
       "message": "Sorry, No referrals found under this referral id."
     }
     
-    # 500   Internal Server Error
+    500   Internal Server Error
 
 
 # Get all Referral
 
     Summary : Gets all referral under a customer_id
     
-    URI :/customer/referral
+    URI :/customer/:id/referral
     
     Method  : HTTP GET
     
     Response Content-Type : application/json
     
     Response :
-    # 200 Success
-    {
-      "statusCode": "200",
-      "message": "Referral added successfully."
-    }
-    {
-      "statusCode": 200,
-      "message": "Sorry customer is already registered with this email."
-    }
+    200 Success
+      {
+        "statusCode": "200",
+        "message": [
+          {
+            "customer_id": "5",
+            "email": "renuk.md3ss2s3jsddss2d4.com",
+            "referral_id": "3",
+            "lastUpdated": "2016-11-30T06:54:33.833Z",
+            "joiningDate": "2016-11-30T06:54:33.833Z",
+            "isAmbassador": false
+          }
+        ]
+      }
+     
     
-    # 404 Not found : {
-    "statusCode": "404",
-      "message": "Sorry, No referrals found under this referral id."
-    }
-    
-    # 500   Internal Server Error
+    404 Not found : 
+        {
+           "statusCode": "404",
+           "message": "Sorry, entered customerId not found in records."
+         }
+     
+     500   Internal Server Error
 
 
 # Get count of Referrals
 
-    Summary : Gets all referral under a customer_id
+    Summary : Gets count of referral under a customer_id
     
-    URI :/customer/referral
+    URI :/customer/:id/referral/count
     
     Method  : HTTP GET
     
@@ -161,7 +168,7 @@
     }
     
     404 Not found : {
-    "statusCode": "404",
+      "statusCode": "404",
       "message": "Sorry, No referrals found under this referral id."
     }
     

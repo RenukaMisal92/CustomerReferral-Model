@@ -142,7 +142,7 @@ var getCountOfReferrals = function(req, res, next){
             buildResponse = utils.getResponse('503', Constants.INTERNAL_SERVER_ERROR);
             return res.status(503).send(buildResponse);
         }
-        if (_.isEmpty(result)) {
+        if (!result) {
             buildResponse = utils.getResponse('404', Constants.REFERRAL_NOT_FOUND);
             return res.status(404).send(buildResponse);
         }
