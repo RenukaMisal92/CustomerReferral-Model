@@ -28,8 +28,8 @@ var getAmbassadorChild = function(req, res, next){
     var currentAmbassadorStatus = req.body.currentAmbassadorStatus;
     if(!currentAmbassadorStatus){
         logger.debug(CONTROLLER_NAME + METHOD_NAME + "currentAmbassadorStatus" + JSON.stringify(currentAmbassadorStatus));
-        buildResponse = utils.getResponse('200', Constants.NOT_AMBASSADOR);
-        return res.status('200').send(buildResponse);
+        buildResponse = utils.getResponse('404', Constants.NOT_AMBASSADOR);
+        return res.status('404').send(buildResponse);
     }
     ambassadorService.fetchAmbassadorChildren(customer_id, level, function(error, result) {
         if(error){
